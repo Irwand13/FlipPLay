@@ -72,3 +72,52 @@ Satu item sengaja tidak tersedia (Squid Game) untuk mendemonstrasikan filter `ge
 4. Menampilkan detail satu media
 5. Menampilkan koleksi media milik pengguna
 6. Filter berdasarkan genre (Aura-Based Discovery)
+
+---
+
+## Demo Modul 4 — Laravel REST API
+
+Demo ini melanjutkan FlipPlay dari Modul 3: entitas yang sama (`Media` dan `User` + koleksi) kini jadi REST API dengan Laravel 12, database MySQL, dan Eloquent ORM. Simulasi terminal Modul 3 (`php index.php`, `src/`) tetap ada dan tetap jalan; `composer.json` di root sekarang milik Laravel.
+
+### Setup
+
+```bash
+composer install
+cp .env.example .env
+# sesuaikan DB_DATABASE dkk. di .env, lalu buat database-nya di Laragon / XAMPP
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
+```
+
+Cek route: `php artisan route:list`
+
+### Endpoint
+
+| Method | Endpoint | Keterangan |
+| --- | --- | --- |
+| GET | /api/media | Daftar media (filter `?title=` dan `?genre=`, pagination 10) |
+| GET | /api/media/{id} | Detail satu media + pengguna yang mengoleksinya |
+| POST | /api/media | Tambah media (201) |
+| PATCH | /api/media/{id} | Ubah media |
+| DELETE | /api/media/{id} | Hapus media (204) |
+| GET | /api/users | Daftar pengguna + jumlah koleksi |
+| GET | /api/users/{id} | Detail pengguna + koleksi medianya |
+| POST | /api/users/{id}/collection | Tambah media ke koleksi (`{"media_id": 1}`, 201; duplikat 409) |
+| DELETE | /api/users/{id}/collection/{media_id} | Hapus media dari koleksi (204; tidak ada di koleksi 404) |
+
+Validasi gagal: 422. ID tidak ditemukan: 404.
+
+### Struktur (tambahan Modul 4)
+
+```
+app/Models/Media.php            Eloquent + relasi users (belongsToMany)
+app/Models/User.php             + relasi media (belongsToMany)
+app/Http/Controllers/MediaController.php    CRUD standar
+app/Http/Controllers/UserController.php     index/show + attach/detach koleksi
+app/Http/Requests/              StoreMediaRequest, UpdateMediaRequest (sometimes buat PATCH)
+app/Http/Resources/             MediaResource, UserResource (whenLoaded / whenCounted)
+database/migrations/            media + pivot media_user
+database/seeders/               MediaSeeder (7 judul Modul 3), UserSeeder
+routes/api.php                  apiResource + route custom collection
+```
